@@ -174,76 +174,6 @@
       text-align: right;
     }
 
-    .music-tools {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(260px, 0.9fr);
-      gap: 12px;
-      margin-top: 14px;
-      padding-top: 14px;
-      border-top: 1px solid var(--border);
-    }
-
-    .music-tool-card {
-      padding: 14px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: #f8fafc;
-    }
-
-    .music-tool-card h3 {
-      margin: 0 0 10px;
-      font-size: 1rem;
-    }
-
-    .transpose-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .transpose-display {
-      min-width: 150px;
-      padding: 9px 12px;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: white;
-      text-align: center;
-      font-weight: 800;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .tool-help {
-      margin: 9px 0 0;
-      color: var(--muted);
-      font-size: 0.84rem;
-      line-height: 1.45;
-    }
-
-    .key-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .key-result {
-      display: block;
-      flex: 1 1 180px;
-      min-height: 42px;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 9px;
-      background: white;
-      color: var(--text);
-      font-weight: 700;
-      line-height: 1.4;
-    }
-
-    .key-result.analyzing {
-      color: var(--muted);
-    }
-
     .master-row {
       display: grid;
       grid-template-columns: auto minmax(120px, 260px) auto;
@@ -586,23 +516,6 @@
         text-align: left;
       }
 
-      .music-tools {
-        grid-template-columns: 1fr;
-      }
-
-      .transpose-buttons button {
-        flex: 1 1 auto;
-      }
-
-      .transpose-display {
-        flex: 1 1 100%;
-        order: -1;
-      }
-
-      .key-row button {
-        width: 100%;
-      }
-
       .track {
         grid-template-columns: 1fr auto auto;
       }
@@ -745,64 +658,6 @@
         </span>
       </div>
 
-      <div class="music-tools">
-        <section class="music-tool-card" aria-labelledby="transposeHeading">
-          <h3 id="transposeHeading">Transpose Playback</h3>
-
-          <div class="transpose-buttons">
-            <button id="transposeDownButton" type="button" disabled>
-              ♭ Lower 1
-            </button>
-
-            <output
-              id="transposeDisplay"
-              class="transpose-display"
-              aria-live="polite"
-            >
-              Original pitch · 0
-            </output>
-
-            <button id="transposeUpButton" type="button" disabled>
-              ♯ Raise 1
-            </button>
-
-            <button id="transposeResetButton" type="button" disabled>
-              Reset
-            </button>
-          </div>
-
-          <p class="tool-help">
-            Adjusts playback from 3 semitones lower to 3 semitones higher
-            while keeping the original tempo. The downloaded MP3 mix remains
-            in the original recorded pitch.
-          </p>
-        </section>
-
-        <section class="music-tool-card" aria-labelledby="keyHeading">
-          <h3 id="keyHeading">Estimated Musical Key</h3>
-
-          <div class="key-row">
-            <button id="analyzeKeyButton" type="button" disabled>
-              Analyze Key
-            </button>
-
-            <output
-              id="keyResult"
-              class="key-result"
-              aria-live="polite"
-            >
-              Not analyzed
-            </output>
-          </div>
-
-          <p class="tool-help">
-            This is an estimate based on the loaded audio. Medleys, modal
-            music, key changes, sparse voice parts, and long introductions
-            can reduce accuracy.
-          </p>
-        </section>
-      </div>
-
       <div class="master-row">
         <label for="masterVolume"><strong>Master volume</strong></label>
         <input id="masterVolume" type="range" min="0" max="1" value="0.9" step="0.01" />
@@ -828,12 +683,6 @@
   </section>
 
 
-
-  <!--
-    Tone.js PitchShift provides near-real-time pitch transposition while
-    retaining the original playback tempo.
-  -->
-  <script src="https://unpkg.com/tone@15.1.22/build/Tone.js"></script>
 
   <!--
     lamejs 1.2.1 is used to encode the rendered browser mix as an MP3.
@@ -1016,11 +865,6 @@
         this.loopEnd = null;
         this.loopRestartPending = false;
 
-        this.transposeSemitones = 0;
-        this.tonePitchShiftAvailable = false;
-        this.estimatedKey = null;
-        this.keyAnalysisGeneration = 0;
-
         this.playButton = document.getElementById("playButton");
         this.stopButton = document.getElementById("stopButton");
         this.restartButton = document.getElementById("restartButton");
@@ -1038,18 +882,6 @@
           document.getElementById("clearLoopButton");
         this.loopRangeDisplay =
           document.getElementById("loopRangeDisplay");
-        this.transposeDownButton =
-          document.getElementById("transposeDownButton");
-        this.transposeUpButton =
-          document.getElementById("transposeUpButton");
-        this.transposeResetButton =
-          document.getElementById("transposeResetButton");
-        this.transposeDisplay =
-          document.getElementById("transposeDisplay");
-        this.analyzeKeyButton =
-          document.getElementById("analyzeKeyButton");
-        this.keyResult =
-          document.getElementById("keyResult");
         this.masterVolume = document.getElementById("masterVolume");
         this.masterVolumeValue = document.getElementById("masterVolumeValue");
         this.trackList = document.getElementById("trackList");
@@ -1076,8 +908,6 @@
         this.populateSongSelector();
         this.bindControls();
         this.updateLoopControls();
-        this.updateTransposeControls();
-        this.updateKeyDisplay();
 
         if (this.songDefinitions.length) {
           this.loadSong(0);
@@ -1093,26 +923,6 @@
           this.masterGain = this.audioContext.createGain();
           this.masterGain.gain.value = Number(this.masterVolume.value);
           this.masterGain.connect(this.audioContext.destination);
-
-          this.tonePitchShiftAvailable = false;
-
-          if (
-            window.Tone &&
-            typeof window.Tone.setContext === "function" &&
-            typeof window.Tone.PitchShift === "function"
-          ) {
-            try {
-              window.Tone.setContext(this.audioContext);
-              this.tonePitchShiftAvailable = true;
-            } catch (error) {
-              console.warn(
-                "Tone.js could not use the player AudioContext:",
-                error
-              );
-            }
-          }
-
-          this.updateTransposeControls();
         }
 
         if (this.audioContext.state === "suspended") {
@@ -1671,22 +1481,6 @@
           this.clearSectionLoop();
         });
 
-        this.transposeDownButton.addEventListener("click", () => {
-          this.setTransposeSemitones(this.transposeSemitones - 1);
-        });
-
-        this.transposeUpButton.addEventListener("click", () => {
-          this.setTransposeSemitones(this.transposeSemitones + 1);
-        });
-
-        this.transposeResetButton.addEventListener("click", () => {
-          this.setTransposeSemitones(0);
-        });
-
-        this.analyzeKeyButton.addEventListener("click", () => {
-          this.analyzeCurrentSongKey();
-        });
-
         this.restartButton.addEventListener("click", async () => {
           const wasPlaying = this.isPlaying;
           this.stopSources();
@@ -1787,11 +1581,6 @@
         this.duration = 0;
         this.seekBar.value = "0";
         this.resetLoopControls();
-        this.transposeSemitones = 0;
-        this.estimatedKey = null;
-        this.keyAnalysisGeneration += 1;
-        this.updateTransposeControls();
-        this.updateKeyDisplay();
         this.renderTracks();
         this.updateTimeUI();
       }
@@ -1842,8 +1631,6 @@
           this.refreshDuration();
           this.renderTracks();
           this.updateTimeUI();
-          this.updateTransposeControls();
-          this.updateKeyDisplay();
 
           if (!definitions.length) {
             this.setStatus(
@@ -1905,7 +1692,6 @@
           solo: false,
           source: null,
           gainNode: null,
-          pitchShiftNode: null,
           isLocal: false,
           downloadAllowed: definition.downloadAllowed !== false
         };
@@ -1930,7 +1716,6 @@
             solo: false,
             source: null,
             gainNode: null,
-            pitchShiftNode: null,
             isLocal: true,
             downloadAllowed: true
           });
@@ -1975,41 +1760,11 @@
           const gainNode = this.audioContext.createGain();
 
           source.buffer = track.buffer;
-
-          let pitchShiftNode = null;
-
-          if (
-            this.transposeSemitones !== 0 &&
-            this.tonePitchShiftAvailable &&
-            window.Tone
-          ) {
-            try {
-              pitchShiftNode = new window.Tone.PitchShift(
-                this.transposeSemitones
-              );
-              pitchShiftNode.windowSize = 0.06;
-              pitchShiftNode.wet.value = 1;
-              pitchShiftNode.feedback.value = 0;
-
-              window.Tone.connect(source, pitchShiftNode);
-              pitchShiftNode.connect(gainNode);
-            } catch (error) {
-              console.warn(
-                "Pitch shifting failed for a track; using original pitch.",
-                error
-              );
-              pitchShiftNode = null;
-              source.connect(gainNode);
-            }
-          } else {
-            source.connect(gainNode);
-          }
-
+          source.connect(gainNode);
           gainNode.connect(this.masterGain);
 
           track.source = source;
           track.gainNode = gainNode;
-          track.pitchShiftNode = pitchShiftNode;
 
           const shouldBeAudible =
             !track.muted && (!anySolo || track.solo);
@@ -2060,16 +1815,6 @@
             }
             track.source.disconnect();
             track.source = null;
-          }
-
-          if (track.pitchShiftNode) {
-            try {
-              track.pitchShiftNode.disconnect();
-              track.pitchShiftNode.dispose();
-            } catch (_) {
-              // The effect may already be disconnected.
-            }
-            track.pitchShiftNode = null;
           }
 
           if (track.gainNode) {
@@ -2326,644 +2071,6 @@
         }
       }
 
-      async setTransposeSemitones(value) {
-        const nextValue = Math.max(
-          -3,
-          Math.min(3, Math.round(Number(value) || 0))
-        );
-
-        if (nextValue === this.transposeSemitones) {
-          return;
-        }
-
-        await this.ensureAudioContext();
-
-        if (nextValue !== 0 && !this.tonePitchShiftAvailable) {
-          this.setStatus(
-            "The pitch-shifting library could not load. Check the internet connection and reload the player.",
-            true
-          );
-          this.updateTransposeControls();
-          return;
-        }
-
-        const wasPlaying = this.isPlaying;
-        const currentTime = this.getCurrentPlaybackTime();
-
-        this.stopSources();
-        this.pausedAt = currentTime;
-        this.transposeSemitones = nextValue;
-        this.updateTransposeControls();
-        this.updateKeyDisplay();
-        this.updateTimeUI();
-
-        const direction =
-          nextValue > 0
-            ? `${nextValue} semitone${nextValue === 1 ? "" : "s"} higher`
-            : nextValue < 0
-              ? `${Math.abs(nextValue)} semitone${nextValue === -1 ? "" : "s"} lower`
-              : "the original pitch";
-
-        this.setStatus(
-          `Playback is now at ${direction}. The original tempo is retained.`
-        );
-
-        if (wasPlaying) {
-          await this.play();
-        }
-      }
-
-      updateTransposeControls() {
-        const hasTracks = this.tracks.some(track => track.buffer);
-        const libraryReady =
-          this.audioContext === null || this.tonePitchShiftAvailable;
-
-        this.transposeDownButton.disabled =
-          !hasTracks ||
-          this.transposeSemitones <= -3 ||
-          !libraryReady;
-
-        this.transposeUpButton.disabled =
-          !hasTracks ||
-          this.transposeSemitones >= 3 ||
-          !libraryReady;
-
-        this.transposeResetButton.disabled =
-          !hasTracks || this.transposeSemitones === 0;
-
-        const value = this.transposeSemitones;
-        const signedValue = value > 0 ? `+${value}` : String(value);
-        const description =
-          value === 0
-            ? "Original pitch"
-            : value > 0
-              ? `${value} semitone${value === 1 ? "" : "s"} higher`
-              : `${Math.abs(value)} semitone${value === -1 ? "" : "s"} lower`;
-
-        this.transposeDisplay.textContent =
-          `${description} · ${signedValue}`;
-
-        this.analyzeKeyButton.disabled = !hasTracks;
-      }
-
-      updateKeyDisplay() {
-        if (!this.estimatedKey) {
-          this.keyResult.textContent = "Not analyzed";
-          this.keyResult.classList.remove("analyzing");
-          return;
-        }
-
-        const originalName = this.formatKeyName(
-          this.estimatedKey.tonic,
-          this.estimatedKey.mode
-        );
-
-        const shiftedTonic =
-          (
-            this.estimatedKey.tonic +
-            this.transposeSemitones +
-            120
-          ) % 12;
-
-        const playbackName = this.formatKeyName(
-          shiftedTonic,
-          this.estimatedKey.mode
-        );
-
-        const confidence =
-          `${this.estimatedKey.confidence} confidence`;
-
-        this.keyResult.textContent =
-          this.transposeSemitones === 0
-            ? `Estimated: ${originalName} · ${confidence}`
-            : `Original: ${originalName} · Playback: ${playbackName} · ${confidence}`;
-
-        this.keyResult.title =
-          this.estimatedKey.alternate
-            ? `Second possibility: ${this.formatKeyName(
-                this.estimatedKey.alternate.tonic,
-                this.estimatedKey.alternate.mode
-              )}`
-            : "";
-      }
-
-      async analyzeCurrentSongKey() {
-        const analysisGeneration = ++this.keyAnalysisGeneration;
-        const playableTracks = this.tracks.filter(track => track.buffer);
-
-        if (!playableTracks.length) {
-          this.setStatus(
-            "No loaded audio is available for key analysis.",
-            true
-          );
-          return;
-        }
-
-        const originalText = this.analyzeKeyButton.textContent;
-        this.analyzeKeyButton.disabled = true;
-        this.analyzeKeyButton.textContent = "Analyzing…";
-        this.keyResult.textContent = "Listening for tonal center…";
-        this.keyResult.classList.add("analyzing");
-
-        try {
-          await new Promise(resolve => window.setTimeout(resolve, 40));
-
-          const chroma = await this.calculateSongChroma(
-            playableTracks,
-            analysisGeneration
-          );
-
-          if (analysisGeneration !== this.keyAnalysisGeneration) {
-            return;
-          }
-
-          const estimate = this.estimateKeyFromChroma(chroma);
-
-          if (!estimate) {
-            throw new Error(
-              "The audio did not contain enough clear tonal information."
-            );
-          }
-
-          this.estimatedKey = estimate;
-          this.updateKeyDisplay();
-
-          const currentSong = this.getCurrentSong();
-          this.setStatus(
-            `Estimated the musical key for “${currentSong?.title || "this song"}”. This is an automated estimate and may need musical verification.`
-          );
-        } catch (error) {
-          console.error(error);
-
-          if (analysisGeneration === this.keyAnalysisGeneration) {
-            this.estimatedKey = null;
-            this.keyResult.textContent =
-              `Unable to estimate: ${error.message}`;
-            this.keyResult.classList.remove("analyzing");
-            this.setStatus(
-              `The key could not be estimated: ${error.message}`,
-              true
-            );
-          }
-        } finally {
-          if (analysisGeneration === this.keyAnalysisGeneration) {
-            this.analyzeKeyButton.disabled =
-              !this.tracks.some(track => track.buffer);
-            this.analyzeKeyButton.textContent = originalText;
-          }
-        }
-      }
-
-      async calculateSongChroma(tracks, analysisGeneration) {
-        const firstBuffer = tracks[0]?.buffer;
-
-        if (!firstBuffer) {
-          throw new Error("No audio buffer was available.");
-        }
-
-        const sampleRate = firstBuffer.sampleRate;
-        const fftSize = 8192;
-        const minimumFrequency = 55;
-        const maximumFrequency = 2200;
-        const maximumWindows = 56;
-        const longestDuration = tracks.reduce(
-          (longest, track) =>
-            Math.max(longest, track.buffer?.duration || 0),
-          0
-        );
-
-        if (longestDuration < fftSize / sampleRate) {
-          throw new Error("The audio is too short to analyze.");
-        }
-
-        const usableStart = longestDuration > 12
-          ? longestDuration * 0.05
-          : 0;
-
-        const usableEnd = longestDuration > 12
-          ? longestDuration * 0.95
-          : longestDuration;
-
-        const availableWindowSpan = Math.max(
-          0,
-          usableEnd - usableStart - fftSize / sampleRate
-        );
-
-        const windowCount = Math.max(
-          8,
-          Math.min(
-            maximumWindows,
-            Math.floor(longestDuration / 1.5)
-          )
-        );
-
-        const hannWindow = new Float64Array(fftSize);
-        for (let index = 0; index < fftSize; index += 1) {
-          hannWindow[index] =
-            0.5 -
-            0.5 * Math.cos((2 * Math.PI * index) / (fftSize - 1));
-        }
-
-        const totalChroma = new Float64Array(12);
-        let acceptedWindows = 0;
-
-        for (
-          let windowNumber = 0;
-          windowNumber < windowCount;
-          windowNumber += 1
-        ) {
-          if (analysisGeneration !== this.keyAnalysisGeneration) {
-            throw new Error("The analysis was cancelled.");
-          }
-
-          const fraction =
-            windowCount === 1
-              ? 0
-              : windowNumber / (windowCount - 1);
-
-          const startTime =
-            usableStart + availableWindowSpan * fraction;
-
-          const frame = new Float64Array(fftSize);
-          let energy = 0;
-
-          for (let sampleIndex = 0; sampleIndex < fftSize; sampleIndex += 1) {
-            const time = startTime + sampleIndex / sampleRate;
-            let mixedSample = 0;
-            let contributors = 0;
-
-            for (const track of tracks) {
-              const buffer = track.buffer;
-              if (!buffer || time >= buffer.duration) continue;
-
-              const sourceIndex = Math.min(
-                buffer.length - 1,
-                Math.floor(time * buffer.sampleRate)
-              );
-
-              let channelSample = 0;
-
-              for (
-                let channel = 0;
-                channel < buffer.numberOfChannels;
-                channel += 1
-              ) {
-                channelSample +=
-                  buffer.getChannelData(channel)[sourceIndex] || 0;
-              }
-
-              channelSample /= Math.max(1, buffer.numberOfChannels);
-              mixedSample += channelSample * Math.max(0.05, track.volume || 0.8);
-              contributors += 1;
-            }
-
-            const sample =
-              contributors > 0
-                ? mixedSample / contributors
-                : 0;
-
-            const windowedSample = sample * hannWindow[sampleIndex];
-            frame[sampleIndex] = windowedSample;
-            energy += windowedSample * windowedSample;
-          }
-
-          const rms = Math.sqrt(energy / fftSize);
-
-          if (rms < 0.0025) {
-            continue;
-          }
-
-          const magnitudes = this.realFftMagnitudes(frame);
-          const frameChroma = new Float64Array(12);
-
-          const minimumBin = Math.max(
-            1,
-            Math.ceil((minimumFrequency * fftSize) / sampleRate)
-          );
-
-          const maximumBin = Math.min(
-            magnitudes.length - 1,
-            Math.floor((maximumFrequency * fftSize) / sampleRate)
-          );
-
-          for (let bin = minimumBin; bin <= maximumBin; bin += 1) {
-            const frequency = (bin * sampleRate) / fftSize;
-            const midi =
-              69 + 12 * Math.log2(frequency / 440);
-
-            if (!Number.isFinite(midi)) continue;
-
-            const nearestMidi = Math.round(midi);
-            const pitchDistance = Math.abs(midi - nearestMidi);
-
-            if (pitchDistance > 0.45) continue;
-
-            const pitchClass =
-              ((nearestMidi % 12) + 12) % 12;
-
-            const magnitude = magnitudes[bin];
-            const tuningWeight =
-              Math.exp(-7 * pitchDistance * pitchDistance);
-
-            const frequencyWeight =
-              1 / Math.sqrt(Math.max(1, frequency / 110));
-
-            frameChroma[pitchClass] +=
-              Math.log1p(magnitude) *
-              tuningWeight *
-              frequencyWeight;
-          }
-
-          const frameTotal = frameChroma.reduce(
-            (sum, value) => sum + value,
-            0
-          );
-
-          if (frameTotal <= 0) {
-            continue;
-          }
-
-          for (let pitchClass = 0; pitchClass < 12; pitchClass += 1) {
-            totalChroma[pitchClass] +=
-              frameChroma[pitchClass] / frameTotal;
-          }
-
-          acceptedWindows += 1;
-
-          if (windowNumber % 4 === 3) {
-            this.keyResult.textContent =
-              `Analyzing… ${Math.round(
-                ((windowNumber + 1) / windowCount) * 100
-              )}%`;
-
-            await new Promise(resolve =>
-              window.requestAnimationFrame(resolve)
-            );
-          }
-        }
-
-        if (acceptedWindows < 4) {
-          throw new Error(
-            "Too few non-silent musical sections were found."
-          );
-        }
-
-        const total = totalChroma.reduce(
-          (sum, value) => sum + value,
-          0
-        );
-
-        if (total <= 0) {
-          throw new Error(
-            "No stable pitch-class pattern was detected."
-          );
-        }
-
-        return Array.from(
-          totalChroma,
-          value => value / total
-        );
-      }
-
-      realFftMagnitudes(signal) {
-        const size = signal.length;
-        const real = new Float64Array(signal);
-        const imaginary = new Float64Array(size);
-
-        let reversedIndex = 0;
-
-        for (let index = 1; index < size; index += 1) {
-          let bit = size >> 1;
-
-          while (reversedIndex & bit) {
-            reversedIndex ^= bit;
-            bit >>= 1;
-          }
-
-          reversedIndex ^= bit;
-
-          if (index < reversedIndex) {
-            const temporary = real[index];
-            real[index] = real[reversedIndex];
-            real[reversedIndex] = temporary;
-          }
-        }
-
-        for (
-          let transformLength = 2;
-          transformLength <= size;
-          transformLength <<= 1
-        ) {
-          const angle = (-2 * Math.PI) / transformLength;
-          const cosineStep = Math.cos(angle);
-          const sineStep = Math.sin(angle);
-
-          for (
-            let blockStart = 0;
-            blockStart < size;
-            blockStart += transformLength
-          ) {
-            let cosine = 1;
-            let sine = 0;
-            const halfLength = transformLength >> 1;
-
-            for (
-              let offset = 0;
-              offset < halfLength;
-              offset += 1
-            ) {
-              const evenIndex = blockStart + offset;
-              const oddIndex = evenIndex + halfLength;
-
-              const oddReal =
-                real[oddIndex] * cosine -
-                imaginary[oddIndex] * sine;
-
-              const oddImaginary =
-                real[oddIndex] * sine +
-                imaginary[oddIndex] * cosine;
-
-              real[oddIndex] =
-                real[evenIndex] - oddReal;
-
-              imaginary[oddIndex] =
-                imaginary[evenIndex] - oddImaginary;
-
-              real[evenIndex] += oddReal;
-              imaginary[evenIndex] += oddImaginary;
-
-              const nextCosine =
-                cosine * cosineStep -
-                sine * sineStep;
-
-              sine =
-                cosine * sineStep +
-                sine * cosineStep;
-
-              cosine = nextCosine;
-            }
-          }
-        }
-
-        const magnitudes = new Float64Array(size >> 1);
-
-        for (let index = 0; index < magnitudes.length; index += 1) {
-          magnitudes[index] = Math.hypot(
-            real[index],
-            imaginary[index]
-          );
-        }
-
-        return magnitudes;
-      }
-
-      estimateKeyFromChroma(chroma) {
-        if (!Array.isArray(chroma) || chroma.length !== 12) {
-          return null;
-        }
-
-        const majorProfile = [
-          6.35, 2.23, 3.48, 2.33, 4.38, 4.09,
-          2.52, 5.19, 2.39, 3.66, 2.29, 2.88
-        ];
-
-        const minorProfile = [
-          6.33, 2.68, 3.52, 5.38, 2.60, 3.53,
-          2.54, 4.75, 3.98, 2.69, 3.34, 3.17
-        ];
-
-        const candidates = [];
-
-        for (let tonic = 0; tonic < 12; tonic += 1) {
-          candidates.push({
-            tonic,
-            mode: "major",
-            score: this.keyProfileCorrelation(
-              chroma,
-              majorProfile,
-              tonic
-            )
-          });
-
-          candidates.push({
-            tonic,
-            mode: "minor",
-            score: this.keyProfileCorrelation(
-              chroma,
-              minorProfile,
-              tonic
-            )
-          });
-        }
-
-        candidates.sort(
-          (first, second) => second.score - first.score
-        );
-
-        const best = candidates[0];
-        const alternate = candidates[1];
-        const margin =
-          best && alternate
-            ? best.score - alternate.score
-            : 0;
-
-        if (!best || !Number.isFinite(best.score)) {
-          return null;
-        }
-
-        let confidence = "low";
-
-        if (best.score >= 0.72 && margin >= 0.07) {
-          confidence = "high";
-        } else if (best.score >= 0.50 && margin >= 0.025) {
-          confidence = "medium";
-        }
-
-        return {
-          tonic: best.tonic,
-          mode: best.mode,
-          score: best.score,
-          margin,
-          confidence,
-          alternate: alternate
-            ? {
-                tonic: alternate.tonic,
-                mode: alternate.mode,
-                score: alternate.score
-              }
-            : null
-        };
-      }
-
-      keyProfileCorrelation(chroma, profile, tonic) {
-        const rotatedProfile = profile.map(
-          (_, pitchClass) =>
-            profile[(pitchClass - tonic + 12) % 12]
-        );
-
-        const chromaMean =
-          chroma.reduce((sum, value) => sum + value, 0) / 12;
-
-        const profileMean =
-          rotatedProfile.reduce(
-            (sum, value) => sum + value,
-            0
-          ) / 12;
-
-        let numerator = 0;
-        let chromaEnergy = 0;
-        let profileEnergy = 0;
-
-        for (let index = 0; index < 12; index += 1) {
-          const chromaDifference =
-            chroma[index] - chromaMean;
-
-          const profileDifference =
-            rotatedProfile[index] - profileMean;
-
-          numerator +=
-            chromaDifference * profileDifference;
-
-          chromaEnergy +=
-            chromaDifference * chromaDifference;
-
-          profileEnergy +=
-            profileDifference * profileDifference;
-        }
-
-        const denominator = Math.sqrt(
-          chromaEnergy * profileEnergy
-        );
-
-        return denominator > 0
-          ? numerator / denominator
-          : -1;
-      }
-
-      formatKeyName(tonic, mode) {
-        const pitchNames = [
-          "C",
-          "C♯/D♭",
-          "D",
-          "E♭",
-          "E",
-          "F",
-          "F♯/G♭",
-          "G",
-          "A♭",
-          "A",
-          "B♭",
-          "B"
-        ];
-
-        const tonicName =
-          pitchNames[((tonic % 12) + 12) % 12] || "C";
-
-        return mode === "minor"
-          ? `${tonicName} minor`
-          : `${tonicName} major`;
-      }
-
       updateTimeUI() {
         const current = Math.min(this.pausedAt, this.duration);
         const progress = this.duration ? current / this.duration : 0;
@@ -3063,9 +2170,7 @@
 
           window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 2000);
           this.setStatus(
-            this.transposeSemitones === 0
-              ? "Your MP3 mix has been created using the current volume, mute, solo, and master-volume settings."
-              : "Your MP3 mix has been created in the original recorded pitch. Real-time transposition currently applies to listening playback only."
+            "Your MP3 mix has been created using the current volume, mute, solo, and master-volume settings."
           );
         } catch (error) {
           console.error(error);
